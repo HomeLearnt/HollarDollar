@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tariff Cost Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; background: #f9f9f9; }
+    h1 { text-align: center; }
+    .calculator { max-width: 500px; margin: auto; background: white; padding: 2em; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { display: block; margin: 1em 0 0.5em; }
+    input, select { width: 100%; padding: 0.5em; font-size: 1em; }
+    button { margin-top: 1em; padding: 0.7em; font-size: 1em; width: 100%; }
+    .result { margin-top: 1em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Tariff Cost Calculator</h1>
+  <div class="calculator">
+    <label for="good">Select Good:</label>
+    <select id="good">
+      <option value="clothes">Clothes</option>
+      <option value="electronics">Electronics</option>
+      <option value="cars">Cars</option>
+    </select>
+
+    <label for="country">Country of Origin:</label>
+    <select id="country">
+      <option value="china">China</option>
+      <option value="mexico">Mexico</option>
+      <option value="germany">Germany</option>
+      <option value="japan">Japan</option>
+      <option value="vietnam">Vietnam</option>
+      <option value="bangladesh">Bangladesh</option>
+      <option value="india">India</option>
+      <option value="south_korea">South Korea</option>
+      <option value="taiwan">Taiwan</option>
+    </select>
+
+    <label for="price">Base Price (USD):</label>
+    <input type="number" id="price" placeholder="Enter price" />
+
+    <button onclick="calculateTariff()">Calculate Final Price</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const baseTariff = 0.10; // Universal baseline tariff
+
+    const countryTariffs = {
+      china: 0.34,
+      mexico: 0.00,
+      germany: 0.20,
+      japan: 0.24,
+      vietnam: 0.46,
+      bangladesh: 0.37,
+      india: 0.26,
+      south_korea: 0.25,
+      taiwan: 0.32
+    };
+
+    const carSpecificTariff = 0.25;
+
+    function calculateTariff() {
+      const good = document.getElementById('good').value;
+      const country = document.getElementById('country').value;
+      const price = parseFloat(document.getElementById('price').value);
+
+      if (isNaN(price) || price <= 0) {
+        document.getElementById('result').innerText = "Please enter a valid base price.";
+        return;
+      }
+
+      const countryTariff = countryTariffs[country] || 0;
+      const extraTariff = good === 'cars' ? carSpecificTariff : 0;
+      const totalTariffRate = baseTariff + countryTariff + extraTariff;
+      const tariffCost = price * totalTariffRate;
+      const finalPrice = price + tariffCost;
+
+      document.getElementById('result').innerText = `Final Price: $${finalPrice.toFixed(2)} (Tariff added: $${tariffCost.toFixed(2)} | Total Tariff Rate: ${(totalTariffRate * 100).toFixed(1)}%)`;
+    }
+  </script>
+</body>
+</html>
