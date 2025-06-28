@@ -111,6 +111,41 @@
       font-size: 12px;
       border-radius: 4px;
       color: white;
+      cursor: pointer;
+    }
+
+    /* Modal styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 10px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h4 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .modal-content button {
+      background: #dc3545;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -130,6 +165,15 @@
     <div class="heatmap-wrapper">
       <h3 style="text-align:center;">🕒 Hollar Dollar Heatmap (6AM – 10PM)</h3>
       <div class="heatmap" id="heatmap"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="hourModal" class="modal hidden">
+    <div class="modal-content" id="modalContent">
+      <h4>Hour Log</h4>
+      <div id="modalEntries"></div>
+      <button onclick="closeModal()">Close</button>
     </div>
   </div>
 
@@ -263,8 +307,43 @@
         block.className = "heat-block";
         block.style.backgroundColor = color;
         block.innerText = `${formatAMPM(hour)}\n(${count})`;
+        block.onclick = () => showHourModal(parseInt(hour));
         heatmap.appendChild(block);
       });
+    }
+
+    function showHourModal(hour) {
+      const entries = [];
+      Object.entries(kids).forEach(([name, kid]) => {
+        kid.log.forEach(entry => {
+          const logHour = new Date(entry.date).getHours();
+          if (logHour === hour) {
+            entries.push({
+              name,
+              time: new Date(entry.date).toLocaleTimeString(),
+              note: entry.note || "No note"
+            });
+          }
+        });
+      });
+
+      const modal = document.getElementById("hourModal");
+      const content = document.getElementById("modalEntries");
+      content.innerHTML = entries.length
+        ? entries.map(e => `
+            <div class="log-entry">
+              <strong>${e.name}</strong> at ${e.time}<br>
+              ${e.note}
+            </div>
+          `).join("")
+        : `<p><em>No infractions logged at ${formatAMPM(hour)}</em></p>`;
+
+      document.querySelector("#modalContent h4").innerText = `Hollar Dollar Log – ${formatAMPM(hour)}`;
+      modal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      document.getElementById("hourModal").classList.add("hidden");
     }
   </script>
 </body>
