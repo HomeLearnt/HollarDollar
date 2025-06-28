@@ -2,32 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hollar Dollar</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-    h1 { color: #333; }
-    .kid-card {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-top: 10px;
-      background: white;
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 0;
     }
-    button { margin: 5px; }
+
+    .container {
+      max-width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1, h3 {
+      text-align: center;
+      color: #333;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      font-size: 18px;
+      width: 80%;
+      max-width: 300px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 12px 18px;
+      font-size: 18px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    .reset-btn {
+      background-color: #dc3545;
+    }
+
+    .kid-card {
+      background: white;
+      padding: 20px;
+      margin: 10px auto;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .kid-card button {
+      width: 100%;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>📢 Hollar Dollar</h1>
+  <div class="container">
+    <h1>📢 Hollar Dollar</h1>
 
-  <h3>Add a Kid</h3>
-  <input type="text" id="kidName" placeholder="Enter kid's name" />
-  <button onclick="addKid()">Add Kid</button>
+    <h3>Add a Kid</h3>
+    <div class="input-group">
+      <input type="text" id="kidName" placeholder="Enter kid's name" />
+      <button onclick="addKid()">Add Kid</button>
+      <button class="reset-btn" onclick="resetAll()">Reset All</button>
+    </div>
 
-  <div id="kidsContainer"></div>
+    <div id="kidsContainer"></div>
+  </div>
 
   <script>
     let kids = {};
 
-    // Load data from localStorage on page load
     window.onload = function () {
       const saved = localStorage.getItem("hollarDollarData");
       if (saved) {
@@ -63,6 +123,14 @@
       }
     }
 
+    function resetAll() {
+      if (confirm("Are you sure you want to reset all data?")) {
+        kids = {};
+        localStorage.removeItem("hollarDollarData");
+        updateUI();
+      }
+    }
+
     function updateUI() {
       const container = document.getElementById("kidsContainer");
       container.innerHTML = "";
@@ -71,7 +139,7 @@
         card.className = "kid-card";
         card.innerHTML = `
           <strong>${name}</strong><br>
-          Owes: $${kids[name].balance}<br>
+          Owes: $${kids[name].balance}<br><br>
           <button onclick="logDollar('${name}')">Hollar Dollar</button>
           <button onclick="payDollar('${name}')">Pay $1 / Do Chore</button>
         `;
