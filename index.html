@@ -114,7 +114,6 @@
       cursor: pointer;
     }
 
-    /* Modal styles */
     .modal {
       position: fixed;
       top: 0;
@@ -181,11 +180,11 @@
     let kids = {};
 
     window.onload = function () {
+      document.getElementById("hourModal").classList.add("hidden");
       const saved = localStorage.getItem("hollarDollarData");
       if (saved) {
         kids = JSON.parse(saved);
       }
-      document.getElementById("hourModal").classList.add("hidden");
       updateUI();
     };
 
