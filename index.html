@@ -30,17 +30,22 @@
       margin-bottom: 20px;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    input[type="datetime-local"],
+    textarea {
       padding: 12px;
-      font-size: 18px;
+      font-size: 16px;
       width: 80%;
       max-width: 300px;
       margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
     }
 
     button {
       padding: 12px 18px;
-      font-size: 18px;
+      font-size: 16px;
       margin: 5px;
       border: none;
       border-radius: 6px;
@@ -48,6 +53,7 @@
       color: white;
       width: 80%;
       max-width: 300px;
+      cursor: pointer;
     }
 
     .reset-btn {
@@ -65,9 +71,36 @@
       text-align: center;
     }
 
-    .kid-card button {
-      width: 100%;
-      margin-top: 10px;
+    .log-entry {
+      background: #eee;
+      border-radius: 5px;
+      margin: 5px 0;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .log-container {
+      margin-top: 15px;
+      text-align: left;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    canvas {
+      max-width: 100%;
+      margin-top: 20px;
+    }
+
+    .chart-wrapper {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
   </style>
 </head>
@@ -83,8 +116,14 @@
     </div>
 
     <div id="kidsContainer"></div>
+
+    <div class="chart-wrapper">
+      <h3 style="text-align:center;">🕒 Behavior Trend (by Hour)</h3>
+      <canvas id="trendChart" height="200"></canvas>
+    </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let kids = {};
 
@@ -103,24 +142,10 @@
     function addKid() {
       const name = document.getElementById("kidName").value.trim();
       if (!name || kids[name]) return;
-      kids[name] = { balance: 0 };
+      kids[name] = { balance: 0, log: [] };
       saveData();
       updateUI();
       document.getElementById("kidName").value = "";
-    }
-
-    function logDollar(name) {
-      kids[name].balance += 1;
-      saveData();
-      updateUI();
-    }
-
-    function payDollar(name) {
-      if (kids[name].balance > 0) {
-        kids[name].balance -= 1;
-        saveData();
-        updateUI();
-      }
     }
 
     function resetAll() {
@@ -131,19 +156,94 @@
       }
     }
 
+    function showLogForm(name) {
+      const date = new Date().toISOString().slice(0, 16);
+      const container = document.getElementById(`logForm-${name}`);
+      container.innerHTML = `
+        <input type="datetime-local" id="logTime-${name}" value="${date}">
+        <textarea id="logNote-${name}" placeholder="Optional note..."></textarea>
+        <button onclick="submitLog('${name}')">Submit Hollar Dollar</button>
+      `;
+    }
+
+    function submitLog(name) {
+      const time = document.getElementById(`logTime-${name}`).value;
+      const note = document.getElementById(`logNote-${name}`).value;
+      kids[name].balance += 1;
+      kids[name].log.push({ date: time, note });
+      saveData();
+      updateUI();
+    }
+
+    function toggleLog(name) {
+      const el = document.getElementById(`log-${name}`);
+      el.classList.toggle("hidden");
+    }
+
+    function payDollar(name) {
+      if (kids[name].balance > 0) {
+        kids[name].balance -= 1;
+        saveData();
+        updateUI();
+      }
+    }
+
     function updateUI() {
       const container = document.getElementById("kidsContainer");
       container.innerHTML = "";
       Object.keys(kids).forEach(name => {
+        const kid = kids[name];
         const card = document.createElement("div");
         card.className = "kid-card";
         card.innerHTML = `
           <strong>${name}</strong><br>
-          Owes: $${kids[name].balance}<br><br>
-          <button onclick="logDollar('${name}')">Hollar Dollar</button>
+          Owes: $${kid.balance}<br><br>
+          <button onclick="showLogForm('${name}')">Hollar Dollar</button>
           <button onclick="payDollar('${name}')">Pay $1 / Do Chore</button>
+          <button onclick="toggleLog('${name}')">📖 View Log</button>
+          <div id="logForm-${name}" class="input-group"></div>
+          <div id="log-${name}" class="log-container hidden">
+            <h4>Log:</h4>
+            ${kid.log.map(entry => `
+              <div class="log-entry">
+                <strong>${new Date(entry.date).toLocaleString()}</strong><br>
+                ${entry.note || "<em>No note provided</em>"}
+              </div>
+            `).join('')}
+          </div>
         `;
         container.appendChild(card);
+      });
+
+      updateChart();
+    }
+
+    function updateChart() {
+      const hours = Array(24).fill(0);
+      Object.values(kids).forEach(kid => {
+        kid.log.forEach(entry => {
+          const hour = new Date(entry.date).getHours();
+          hours[hour]++;
+        });
+      });
+
+      const ctx = document.getElementById("trendChart").getContext("2d");
+      if (window.trendChart) window.trendChart.destroy();
+      window.trendChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: hours.map((_, i) => i + ":00"),
+          datasets: [{
+            label: "# of Hollar Dollars",
+            data: hours,
+            backgroundColor: "rgba(255, 99, 132, 0.6)"
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
       });
     }
   </script>
