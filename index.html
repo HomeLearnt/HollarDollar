@@ -89,18 +89,28 @@
       display: none;
     }
 
-    canvas {
-      max-width: 100%;
-      margin-top: 20px;
-    }
-
-    .chart-wrapper {
+    .heatmap-wrapper {
+      margin: 30px auto;
       max-width: 500px;
-      margin: 0 auto;
-      background: white;
       padding: 20px;
+      background: white;
       border-radius: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .heat-block {
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+      border-radius: 4px;
+      color: white;
     }
   </style>
 </head>
@@ -117,13 +127,12 @@
 
     <div id="kidsContainer"></div>
 
-    <div class="chart-wrapper">
-      <h3 style="text-align:center;">🕒 Behavior Trend (by Hour)</h3>
-      <canvas id="trendChart" height="200"></canvas>
+    <div class="heatmap-wrapper">
+      <h3 style="text-align:center;">🕒 Hollar Dollar Heatmap (by Hour)</h3>
+      <div class="heatmap" id="heatmap"></div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let kids = {};
 
@@ -215,45 +224,32 @@
         container.appendChild(card);
       });
 
-      updateChart();
+      updateHeatmap();
     }
 
-    function updateChart() {
+    function updateHeatmap() {
       const hours = Array(24).fill(0);
-
       Object.values(kids).forEach(kid => {
         kid.log.forEach(entry => {
           try {
-            const parsed = new Date(entry.date);
-            if (!isNaN(parsed)) {
-              const hour = parsed.getHours();
-              hours[hour]++;
-            }
-          } catch (err) {
-            console.error("Invalid date in log:", entry.date);
-          }
+            const hour = new Date(entry.date).getHours();
+            if (!isNaN(hour)) hours[hour]++;
+          } catch (err) {}
         });
       });
 
-      const ctx = document.getElementById("trendChart").getContext("2d");
-      if (window.trendChart) window.trendChart.destroy();
-      window.trendChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: hours.map((_, i) => i + ":00"),
-          datasets: [{
-            label: "# of Hollar Dollars",
-            data: hours,
-            backgroundColor: "rgba(255, 99, 132, 0.6)"
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
+      const max = Math.max(...hours);
+      const heatmap = document.getElementById("heatmap");
+      heatmap.innerHTML = "";
+
+      hours.forEach((count, hour) => {
+        const intensity = max > 0 ? Math.round((count / max) * 255) : 0;
+        const color = `rgb(${intensity}, 50, 70)`; // reddish tone
+        const block = document.createElement("div");
+        block.className = "heat-block";
+        block.style.backgroundColor = color;
+        block.innerText = `${hour}:00\n(${count})`;
+        heatmap.appendChild(block);
       });
     }
   </script>
