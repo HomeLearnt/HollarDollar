@@ -220,10 +220,18 @@
 
     function updateChart() {
       const hours = Array(24).fill(0);
+
       Object.values(kids).forEach(kid => {
         kid.log.forEach(entry => {
-          const hour = new Date(entry.date).getHours();
-          hours[hour]++;
+          try {
+            const parsed = new Date(entry.date);
+            if (!isNaN(parsed)) {
+              const hour = parsed.getHours();
+              hours[hour]++;
+            }
+          } catch (err) {
+            console.error("Invalid date in log:", entry.date);
+          }
         });
       });
 
@@ -240,6 +248,8 @@
           }]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           scales: {
             y: { beginAtZero: true }
           }
