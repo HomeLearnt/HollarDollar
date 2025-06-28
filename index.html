@@ -100,7 +100,7 @@
 
     .heatmap {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 6px;
       margin-top: 10px;
     }
@@ -128,7 +128,7 @@
     <div id="kidsContainer"></div>
 
     <div class="heatmap-wrapper">
-      <h3 style="text-align:center;">🕒 Hollar Dollar Heatmap (by Hour)</h3>
+      <h3 style="text-align:center;">🕒 Hollar Dollar Heatmap (6AM – 10PM)</h3>
       <div class="heatmap" id="heatmap"></div>
     </div>
   </div>
@@ -165,11 +165,17 @@
       }
     }
 
+    function getLocalDateTime() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      const local = new Date(now.getTime() - offset * 60000);
+      return local.toISOString().slice(0, 16);
+    }
+
     function showLogForm(name) {
-      const date = new Date().toISOString().slice(0, 16);
       const container = document.getElementById(`logForm-${name}`);
       container.innerHTML = `
-        <input type="datetime-local" id="logTime-${name}" value="${date}">
+        <input type="datetime-local" id="logTime-${name}" value="${getLocalDateTime()}">
         <textarea id="logNote-${name}" placeholder="Optional note..."></textarea>
         <button onclick="submitLog('${name}')">Submit Hollar Dollar</button>
       `;
@@ -234,23 +240,25 @@
     }
 
     function updateHeatmap() {
-      const hours = Array(24).fill(0);
+      const hours = {};
+      for (let i = 6; i <= 22; i++) hours[i] = 0;
+
       Object.values(kids).forEach(kid => {
         kid.log.forEach(entry => {
           try {
             const hour = new Date(entry.date).getHours();
-            if (!isNaN(hour)) hours[hour]++;
+            if (hours.hasOwnProperty(hour)) hours[hour]++;
           } catch (err) {}
         });
       });
 
-      const max = Math.max(...hours);
+      const max = Math.max(...Object.values(hours));
       const heatmap = document.getElementById("heatmap");
       heatmap.innerHTML = "";
 
-      hours.forEach((count, hour) => {
+      Object.entries(hours).forEach(([hour, count]) => {
         const intensity = max > 0 ? Math.round((count / max) * 255) : 0;
-        const color = `rgb(${intensity}, 50, 70)`; // reddish tone
+        const color = `rgb(${intensity}, 50, 70)`;
         const block = document.createElement("div");
         block.className = "heat-block";
         block.style.backgroundColor = color;
