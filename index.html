@@ -197,6 +197,12 @@
       }
     }
 
+    function formatAMPM(hour) {
+      const suffix = hour >= 12 ? "PM" : "AM";
+      const hr = hour % 12 || 12;
+      return `${hr} ${suffix}`;
+    }
+
     function updateUI() {
       const container = document.getElementById("kidsContainer");
       container.innerHTML = "";
@@ -248,7 +254,7 @@
         const block = document.createElement("div");
         block.className = "heat-block";
         block.style.backgroundColor = color;
-        block.innerText = `${hour}:00\n(${count})`;
+        block.innerText = `${formatAMPM(hour)}\n(${count})`;
         heatmap.appendChild(block);
       });
     }
