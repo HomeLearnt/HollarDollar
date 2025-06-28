@@ -184,8 +184,9 @@
       const saved = localStorage.getItem("hollarDollarData");
       if (saved) {
         kids = JSON.parse(saved);
-        updateUI();
       }
+      document.getElementById("hourModal").classList.add("hidden");
+      updateUI();
     };
 
     function saveData() {
