@@ -25,24 +25,40 @@
   <div id="kidsContainer"></div>
 
   <script>
-    const kids = {};
+    let kids = {};
+
+    // Load data from localStorage on page load
+    window.onload = function () {
+      const saved = localStorage.getItem("hollarDollarData");
+      if (saved) {
+        kids = JSON.parse(saved);
+        updateUI();
+      }
+    };
+
+    function saveData() {
+      localStorage.setItem("hollarDollarData", JSON.stringify(kids));
+    }
 
     function addKid() {
       const name = document.getElementById("kidName").value.trim();
       if (!name || kids[name]) return;
       kids[name] = { balance: 0 };
+      saveData();
       updateUI();
       document.getElementById("kidName").value = "";
     }
 
     function logDollar(name) {
       kids[name].balance += 1;
+      saveData();
       updateUI();
     }
 
     function payDollar(name) {
       if (kids[name].balance > 0) {
         kids[name].balance -= 1;
+        saveData();
         updateUI();
       }
     }
