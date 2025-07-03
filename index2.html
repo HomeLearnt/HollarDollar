@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hollar Dollar Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f8f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #d9534f; /* A bold, "hollar" red */
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.8em;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .child-input-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .child-input-section input[type="text"] {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            flex-grow: 1;
+            max-width: 250px;
+            font-size: 1em;
+        }
+
+        .child-input-section button {
+            background-color: #5cb85c; /* Green for adding */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .child-input-section button:hover {
+            background-color: #4cae4c;
+        }
+
+        .child-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .child-card {
+            background-color: #f0f8ff; /* Light blue background for cards */
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .child-card h2 {
+            color: #337ab7; /* Blue for child names */
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .child-card .amount {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #d9534f;
+            margin-bottom: 15px;
+        }
+
+        .child-card button {
+            background-color: #d9534f; /* Red for "Hollar!" */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+            margin-top: 10px; /* Space from amount */
+        }
+
+        .child-card button:hover {
+            background-color: #c9302c;
+        }
+
+        .child-card .reset-button {
+            background-color: #f0ad4e; /* Orange for reset */
+            margin-left: 10px;
+        }
+
+        .child-card .reset-button:hover {
+            background-color: #ec971f;
+        }
+
+        .child-card .log-button {
+            background-color: #5bc0de; /* Light blue for log */
+            margin-left: 10px;
+        }
+
+        .child-card .log-button:hover {
+            background-color: #31b0d5;
+        }
+
+        .log-display {
+            margin-top: 20px;
+            text-align: left;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .log-display h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px dashed #eee;
+            font-size: 0.95em;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hollar Dollar Tracker</h1>
+
+        <div class="child-input-section">
+            <input type="text" id="childNameInput" placeholder="Enter child's name">
+            <button onclick="addChild()">Add Child</button>
+        </div>
+
+        <div id="childCardsContainer" class="child-cards-container">
+            </div>
+
+        <div class="log-display">
+            <h3>Hollar Log</h3>
+            <div id="hollarLog">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Use an object to store child data for easy access and modification
+        let children = {};
+        let hollarLog = []; // To store a history of hollars
+
+        // Function to save data to localStorage
+        function saveData() {
+            localStorage.setItem('hollarDollarChildren', JSON.stringify(children));
+            localStorage.setItem('hollarDollarLog', JSON.stringify(hollarLog));
+        }
+
+        // Function to load data from localStorage
+        function loadData() {
+            const savedChildren = localStorage.getItem('hollarDollarChildren');
+            const savedLog = localStorage.getItem('hollarDollarLog');
+            if (savedChildren) {
+                children = JSON.parse(savedChildren);
+            }
+            if (savedLog) {
+                hollarLog = JSON.parse(savedLog);
+            }
+            renderChildren(); // Render children loaded from storage
+            renderLog(); // Render log entries
+        }
+
+
+        function addChild() {
+            const input = document.getElementById('childNameInput');
+            const name = input.value.trim();
+            if (name && !children[name]) { // Check if name is not empty and doesn't already exist
+                children[name] = { amount: 0, entries: [] };
+                input.value = ''; // Clear input
+                renderChildren();
+                saveData();
+            } else if (children[name]) {
+                alert("This child already exists!");
+            }
+        }
+
+        function hollar(childName) {
+            children[childName].amount += 1;
+            const timestamp = new Date().toLocaleString();
+            const entry = { child: childName, amount: 1, timestamp: timestamp };
+            children[childName].entries.push(entry); // Add to child's specific entries
+            hollarLog.push(entry); // Add to global log
+            renderChildren();
+            renderLog();
+            saveData();
+        }
+
+        function resetAmount(childName) {
+            if (confirm(`Are you sure you want to reset ${childName}'s amount to $0?`)) {
+                children[childName].amount = 0;
+                children[childName].entries = []; // Clear individual entries
+                // Optionally remove from global log if paid/reset
+                // For this simple version, we'll keep the global log for history
+                renderChildren();
+                saveData();
+            }
+        }
+
+        function renderChildren() {
+            const container = document.getElementById('childCardsContainer');
+            container.innerHTML = ''; // Clear existing cards
+
+            for (const name in children) {
+                const child = children[name];
+                const card = document.createElement('div');
+                card.className = 'child-card';
+                card.innerHTML = `
+                    <h2>${name}</h2>
+                    <div class="amount">$${child.amount}</div>
+                    <button onclick="hollar('${name}')">Hollar!</button>
+                    <button class="reset-button" onclick="resetAmount('${name}')">Reset</button>
+                    <button class="log-button" onclick="showChildLog('${name}')">View Log</button>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function renderLog() {
+            const logDisplay = document.getElementById('hollarLog');
+            logDisplay.innerHTML = ''; // Clear existing log
+
+            // Display global log, newest first
+            hollarLog.slice().reverse().forEach(entry => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = `${entry.timestamp}: ${entry.child} owes $${entry.amount}`;
+                logDisplay.appendChild(logEntry);
+            });
+        }
+
+        function showChildLog(childName) {
+            const child = children[childName];
+            if (!child || child.entries.length === 0) {
+                alert(`${childName} has no Hollar Dollar entries yet.`);
+                return;
+            }
+
+            let logMessage = `Hollar Dollar Log for ${childName}:\n\n`;
+            child.entries.forEach(entry => {
+                logMessage += `${entry.timestamp}: Owed $${entry.amount}\n`;
+            });
+            alert(logMessage);
+        }
+
+        // Load data when the page loads
+        window.onload = loadData;
+
+    </script>
+</body>
+</html>
