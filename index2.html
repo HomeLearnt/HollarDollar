@@ -25,6 +25,7 @@
             width: 100%;
             max-width: 800px;
             box-sizing: border-box;
+            margin-bottom: 20px; /* Space before potential bottom content */
         }
 
         h1 {
@@ -102,39 +103,80 @@
             margin-bottom: 15px;
         }
 
-        .child-card button {
-            background-color: #d9534f; /* Red for "Hollar!" */
-            color: white;
-            padding: 10px 20px;
-            border: none;
+        .child-card .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Space between buttons */
+            margin-top: 15px;
+        }
+
+        .child-card .button-group button {
+            width: 100%; /* Make buttons full width */
+            padding: 12px 0; /* Adjust padding for full width */
             border-radius: 5px;
+            border: none;
             cursor: pointer;
             font-size: 1.1em;
             transition: background-color 0.3s ease;
-            margin-top: 10px; /* Space from amount */
+            color: white;
         }
 
-        .child-card button:hover {
+        .child-card .hollar-button {
+            background-color: #d9534f; /* Red */
+        }
+        .child-card .hollar-button:hover {
             background-color: #c9302c;
         }
 
-        .child-card .reset-button {
-            background-color: #f0ad4e; /* Orange for reset */
-            margin-left: 10px;
+        .child-card .pay-button {
+            background-color: #5bc0de; /* Light blue */
+        }
+        .child-card .pay-button:hover {
+            background-color: #31b0d5;
         }
 
+        .child-card .reset-button {
+            background-color: #f0ad4e; /* Orange */
+        }
         .child-card .reset-button:hover {
             background-color: #ec971f;
         }
 
-        .child-card .log-button {
-            background-color: #5bc0de; /* Light blue for log */
-            margin-left: 10px;
+        .child-card .remove-button {
+            background-color: #aaaaaa; /* Grey */
+        }
+        .child-card .remove-button:hover {
+            background-color: #888888;
         }
 
-        .child-card .log-button:hover {
-            background-color: #31b0d5;
+        .child-card .view-log-button {
+            background-color: #777777; /* Darker Grey for log */
         }
+        .child-card .view-log-button:hover {
+            background-color: #666666;
+        }
+
+        .hollar-reason-section {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .hollar-reason-section select,
+        .hollar-reason-section input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95em;
+            width: calc(100% - 16px); /* Adjust width for padding */
+            max-width: 300px;
+            box-sizing: border-box; /* Include padding in width */
+        }
+        .hollar-reason-section input[type="text"] {
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+        }
+
 
         .log-display {
             margin-top: 20px;
@@ -171,6 +213,19 @@
             <button onclick="addChild()">Add Child</button>
         </div>
 
+        <div class="hollar-reason-section">
+            <label for="hollarReason">Reason for Hollar:</label><br>
+            <select id="hollarReason" onchange="toggleOtherReasonInput()">
+                <option value="General Misbehavior">General Misbehavior</option>
+                <option value="Not Listening">Not Listening</option>
+                <option value="Sibling Rivalry">Sibling Rivalry</option>
+                <option value="Back Talk">Back Talk</option>
+                <option value="Chores Not Done">Chores Not Done</option>
+                <option value="Other">Other (specify)</option>
+            </select>
+            <input type="text" id="otherReasonInput" placeholder="Specify reason...">
+        </div>
+
         <div id="childCardsContainer" class="child-cards-container">
             </div>
 
@@ -182,17 +237,14 @@
     </div>
 
     <script>
-        // Use an object to store child data for easy access and modification
         let children = {};
-        let hollarLog = []; // To store a history of hollars
+        let hollarLog = [];
 
-        // Function to save data to localStorage
         function saveData() {
             localStorage.setItem('hollarDollarChildren', JSON.stringify(children));
             localStorage.setItem('hollarDollarLog', JSON.stringify(hollarLog));
         }
 
-        // Function to load data from localStorage
         function loadData() {
             const savedChildren = localStorage.getItem('hollarDollarChildren');
             const savedLog = localStorage.getItem('hollarDollarLog');
@@ -202,49 +254,106 @@
             if (savedLog) {
                 hollarLog = JSON.parse(savedLog);
             }
-            renderChildren(); // Render children loaded from storage
-            renderLog(); // Render log entries
+            renderChildren();
+            renderLog();
         }
-
 
         function addChild() {
             const input = document.getElementById('childNameInput');
             const name = input.value.trim();
-            if (name && !children[name]) { // Check if name is not empty and doesn't already exist
+            if (name && !children[name]) {
                 children[name] = { amount: 0, entries: [] };
-                input.value = ''; // Clear input
+                input.value = '';
                 renderChildren();
                 saveData();
             } else if (children[name]) {
                 alert("This child already exists!");
+            } else {
+                alert("Please enter a child's name.");
+            }
+        }
+
+        function getHollarReason() {
+            const selectElement = document.getElementById('hollarReason');
+            const otherInput = document.getElementById('otherReasonInput');
+            if (selectElement.value === "Other") {
+                const customReason = otherInput.value.trim();
+                return customReason ? customReason : "Unspecified Other Reason";
+            }
+            return selectElement.value;
+        }
+
+        function toggleOtherReasonInput() {
+            const selectElement = document.getElementById('hollarReason');
+            const otherInput = document.getElementById('otherReasonInput');
+            if (selectElement.value === "Other") {
+                otherInput.style.display = 'inline-block';
+                otherInput.focus();
+            } else {
+                otherInput.style.display = 'none';
+                otherInput.value = ''; // Clear if not used
             }
         }
 
         function hollar(childName) {
+            const reason = getHollarReason();
             children[childName].amount += 1;
             const timestamp = new Date().toLocaleString();
-            const entry = { child: childName, amount: 1, timestamp: timestamp };
-            children[childName].entries.push(entry); // Add to child's specific entries
-            hollarLog.push(entry); // Add to global log
+            const entry = { child: childName, amount: 1, type: 'Hollar', reason: reason, timestamp: timestamp };
+            children[childName].entries.push(entry);
+            hollarLog.push(entry);
             renderChildren();
             renderLog();
             saveData();
         }
 
+        function payAmount(childName) {
+            if (children[childName].amount > 0) {
+                const amountToDeduct = parseFloat(prompt(`How much is ${childName} paying/deducting from their $${children[childName].amount} debt?`));
+                if (!isNaN(amountToDeduct) && amountToDeduct > 0) {
+                    children[childName].amount -= amountToDeduct;
+                    if (children[childName].amount < 0) children[childName].amount = 0; // Don't go below zero
+                    const timestamp = new Date().toLocaleString();
+                    const entry = { child: childName, amount: -amountToDeduct, type: 'Payment', timestamp: timestamp };
+                    children[childName].entries.push(entry);
+                    hollarLog.push(entry);
+                    renderChildren();
+                    renderLog();
+                    saveData();
+                } else {
+                    alert("Please enter a valid positive number for deduction.");
+                }
+            } else {
+                alert(`${childName} doesn't owe any Hollar Dollars!`);
+            }
+        }
+
         function resetAmount(childName) {
-            if (confirm(`Are you sure you want to reset ${childName}'s amount to $0?`)) {
+            if (confirm(`Are you sure you want to reset ${childName}'s amount to $0? This will also clear their individual log entries.`)) {
                 children[childName].amount = 0;
                 children[childName].entries = []; // Clear individual entries
-                // Optionally remove from global log if paid/reset
-                // For this simple version, we'll keep the global log for history
+                // Option: remove from global log if paid/reset - for now, global log keeps history
                 renderChildren();
+                saveData();
+            }
+        }
+
+        function removeChild(childName) {
+            if (confirm(`Are you sure you want to remove ${childName}? This action cannot be undone.`)) {
+                // Remove from children object
+                delete children[childName];
+                // Also remove their entries from the global log for cleanliness
+                hollarLog = hollarLog.filter(entry => entry.child !== childName);
+
+                renderChildren();
+                renderLog();
                 saveData();
             }
         }
 
         function renderChildren() {
             const container = document.getElementById('childCardsContainer');
-            container.innerHTML = ''; // Clear existing cards
+            container.innerHTML = '';
 
             for (const name in children) {
                 const child = children[name];
@@ -253,9 +362,13 @@
                 card.innerHTML = `
                     <h2>${name}</h2>
                     <div class="amount">$${child.amount}</div>
-                    <button onclick="hollar('${name}')">Hollar!</button>
-                    <button class="reset-button" onclick="resetAmount('${name}')">Reset</button>
-                    <button class="log-button" onclick="showChildLog('${name}')">View Log</button>
+                    <div class="button-group">
+                        <button class="hollar-button" onclick="hollar('${name}')">Hollar!</button>
+                        <button class="pay-button" onclick="payAmount('${name}')">Pay/Deduct</button>
+                        <button class="reset-button" onclick="resetAmount('${name}')">Reset</button>
+                        <button class="view-log-button" onclick="showChildLog('${name}')">View Log</button>
+                        <button class="remove-button" onclick="removeChild('${name}')">Remove Child</button>
+                    </div>
                 `;
                 container.appendChild(card);
             }
@@ -263,13 +376,18 @@
 
         function renderLog() {
             const logDisplay = document.getElementById('hollarLog');
-            logDisplay.innerHTML = ''; // Clear existing log
+            logDisplay.innerHTML = '';
 
-            // Display global log, newest first
             hollarLog.slice().reverse().forEach(entry => {
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
-                logEntry.textContent = `${entry.timestamp}: ${entry.child} owes $${entry.amount}`;
+                let message = `${entry.timestamp}: ${entry.child} `;
+                if (entry.type === 'Hollar') {
+                    message += `owes $${entry.amount} for "${entry.reason}"`;
+                } else if (entry.type === 'Payment') {
+                    message += `paid/deducted $${Math.abs(entry.amount)}`;
+                }
+                logEntry.textContent = message;
                 logDisplay.appendChild(logEntry);
             });
         }
@@ -283,12 +401,17 @@
 
             let logMessage = `Hollar Dollar Log for ${childName}:\n\n`;
             child.entries.forEach(entry => {
-                logMessage += `${entry.timestamp}: Owed $${entry.amount}\n`;
+                let entryText = `${entry.timestamp}: `;
+                if (entry.type === 'Hollar') {
+                    entryText += `Owed $${entry.amount} for "${entry.reason}"`;
+                } else if (entry.type === 'Payment') {
+                    entryText += `Paid/Deducted $${Math.abs(entry.amount)}`;
+                }
+                logMessage += entryText + '\n';
             });
             alert(logMessage);
         }
 
-        // Load data when the page loads
         window.onload = loadData;
 
     </script>
